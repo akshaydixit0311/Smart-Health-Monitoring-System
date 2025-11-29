@@ -1,0 +1,9 @@
+# Smart Health Monitoring Dashboard
+# Frontend-only project (no backend dependencies)
+
+HTML5
+CSS3
+JavaScript (ES6)
+
+# External Libraries (via CDN)
+Chart.js
