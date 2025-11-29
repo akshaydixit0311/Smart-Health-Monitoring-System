@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Health Monitoring — Dashboard (Static)</title>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --accent:#206bc4;
+      --danger:#e03e3e;
+      --muted:#6b7280;
+      --glass: rgba(255,255,255,0.7);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: linear-gradient(180deg, #eef6ff 0%, var(--bg) 100%);
+      color:#0f172a;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:20px;
+    }
+
+    .container{
+      max-width:1100px;
+      margin:0 auto;
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:18px;
+    }
+    header .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .logo{
+      width:52px;height:52px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,#1f7be7,#3aa0f5);
+      color:#fff;font-weight:700;font-size:18px;
+      box-shadow:0 6px 18px rgba(31,123,231,0.18);
+    }
+    h1{font-size:20px;margin:0}
+    p.subtitle{margin:0;color:var(--muted);font-size:13px}
+
+    /* grid */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      gap:18px;
+    }
+    @media (max-width:960px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    /* Cards */
+    .card{
+      background:var(--card);
+      border-radius:12px;
+      padding:14px;
+      box-shadow:0 6px 18px rgba(15,23,42,0.06);
+      border:1px solid rgba(15,23,42,0.04);
+    }
+
+    /* status row */
+    .status-row{
+      display:flex;
+      gap:12px;
+      align-items:stretch;
+      margin-bottom:12px;
+    }
+    .status{
+      flex:1;
+      padding:12px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.9));
+      border:1px solid rgba(0,0,0,0.04);
+    }
+    .status .val{font-size:20px;font-weight:700}
+    .status .lbl{font-size:12px;color:var(--muted)}
+
+    .status.heart .icon{font-size:22px;color:#e44b4b}
+    .status.temp .icon{font-size:22px;color:#ff914d}
+    .status.battery .icon{font-size:22px;color:#2fa84f}
+
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-top:10px;
+    }
+    button{
+      background:var(--accent);
+      color:#fff;border:0;padding:8px 12px;border-radius:8px;
+      font-weight:600;cursor:pointer;
+      box-shadow:0 6px 12px rgba(32,107,196,0.12);
+    }
+    button.secondary{
+      background:#fff;color:var(--accent);border:1px solid rgba(32,107,196,0.12);
+    }
+
+    /* charts container */
+    .charts{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width:720px){ .charts{grid-template-columns:1fr} }
+
+    /* history table */
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:8px;border-bottom:1px solid #eef1f5;text-align:left;font-size:13px}
+    th{font-weight:700;color:var(--muted);font-size:12px}
+    .alert{
+      padding:10px;border-radius:8px;margin-top:10px;font-weight:700;color:#fff;
+    }
+    .alert.ok{background:#2fa84f}
+    .alert.warn{background:#ffb020}
+    .alert.crit{background:var(--danger)}
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">SH</div>
+        <div>
+          <h1>Smart Health Monitoring Dashboard</h1>
+          <p class="subtitle">Static prototype • Simulated real-time data • BCC351 Mini Project</p>
+        </div>
+      </div>
+
+      <div style="text-align:right">
+        <div style="font-weight:700">Individual: Akshay Dixit</div>
+        <div class="subtitle">Date: 26 Nov 2025</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- left: main dashboard -->
+      <section>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <strong>Live Vitals</strong>
+              <div style="color:var(--muted);font-size:13px">Simulated sensor readings (updates every 2s)</div>
+            </div>
+            <div style="font-size:12px;color:var(--muted)">Status: <span id="systemState">Connected</span></div>
+          </div>
+
+          <div class="status-row" style="margin-top:14px">
+            <div class="status heart">
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="icon">❤️</div>
+                  <div>
+                    <div class="val" id="heartVal">-- bpm</div>
+                    <div class="lbl">Heart Rate</div>
+                  </div>
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:11px;color:var(--muted)">Threshold</div>
+                <div style="font-weight:700">> <span id="hrThresh">100</span> bpm</div>
+              </div>
+            </div>
+
+            <div class="status temp">
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="icon">🌡️</div>
+                  <div>
+                    <div class="val" id="tempVal">-- °C</div>
+                    <div class="lbl">Body Temperature</div>
+                  </div>
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:11px;color:var(--muted)">Threshold</div>
+                <div style="font-weight:700">> <span id="tempThresh">37.5</span> °C</div>
+              </div>
+            </div>
+
+            <div class="status battery">
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="icon">🔋</div>
+                  <div>
+                    <div class="val" id="batVal">-- %</div>
+                    <div class="lbl">Sensor Battery</div>
+                  </div>
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:11px;color:var(--muted)">Low</div>
+                <div style="font-weight:700"><span id="batThresh">20</span>%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="toggleBtn">Pause</button>
+            <button class="secondary" id="resetBtn">Reset History</button>
+            <div style="margin-left:auto;color:var(--muted);font-size:13px">
+              Sim speed:
+              <select id="simSpeed" style="padding:6px;border-radius:6px;border:1px solid #e6eefc;margin-left:6px">
+                <option value="2000">1x (2s)</option>
+                <option value="1000">2x (1s)</option>
+                <option value="500">4x (0.5s)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="charts">
+            <div class="card" style="padding:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <strong>Heart Rate (last 30)</strong>
+                <div style="font-size:12px;color:var(--muted)">bpm</div>
+              </div>
+              <canvas id="hrChart" height="160"></canvas>
+            </div>
+
+            <div class="card" style="padding:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <strong>Temperature (last 30)</strong>
+                <div style="font-size:12px;color:var(--muted)">°C</div>
+              </div>
+              <canvas id="tempChart" height="160"></canvas>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1">
+              <strong>Recent readings</strong>
+              <table id="historyTable" aria-live="polite">
+                <thead>
+                  <tr><th>Time</th><th>Heart (bpm)</th><th>Temp (°C)</th><th>Battery</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+
+            <div style="width:260px">
+              <strong>Alerts</strong>
+              <div id="alertsBox" style="min-height:110px"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Implementation / Notes -->
+        <div class="card" style="margin-top:12px">
+          <strong>Implementation Notes</strong>
+          <ul style="margin:8px 0 0 18px;color:var(--muted)">
+            <li>Static front-end prototype with simulated sensor data (JavaScript).</li>
+            <li>Charts created using Chart.js. Replace simulation with live data via WebSocket/REST for real use.</li>
+            <li>Thresholds & alert rules can be configured from the UI (tweak constants in script).</li>
+          </ul>
+        </div>
+
+      </section>
+
+      <!-- right: summary / config -->
+      <aside>
+        <div class="card">
+          <strong>Device Summary</strong>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">
+            <div>Device: Pulse + Temp Sensor Module</div>
+            <div>Connection: USB / Wi-Fi (simulated)</div>
+            <div>Data store: Local (browser) — replace with Firebase / server</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <strong>Thresholds</strong>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <label style="flex:1">
+                <div style="font-size:12px;color:var(--muted)">HR threshold (bpm)</div>
+                <input id="inputHrThresh" type="number" value="100" style="width:100%;padding:8px;border-radius:8px;border:1px solid #eee;margin-top:6px"/>
+              </label>
+              <label style="flex:1">
+                <div style="font-size:12px;color:var(--muted)">Temp threshold (°C)</div>
+                <input id="inputTempThresh" type="number" step="0.1" value="37.5" style="width:100%;padding:8px;border-radius:8px;border:1px solid #eee;margin-top:6px"/>
+              </label>
+            </div>
+
+            <div style="margin-top:10px">
+              <div style="font-size:12px;color:var(--muted)">Battery low %</div>
+              <input id="inputBatThresh" type="number" value="20" style="width:100%;padding:8px;border-radius:8px;border:1px solid #eee;margin-top:6px"/>
+            </div>
+
+            <button id="applyThresh" style="margin-top:10px">Apply</button>
+          </div>
+
+          <div style="margin-top:12px">
+            <strong>Quick Actions</strong>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+              <button id="exportCsv" class="secondary">Export history CSV</button>
+              <button id="snapshotBtn" class="secondary">Take snapshot (png)</button>
+              <button id="demoAlert" class="secondary">Trigger demo critical alert</button>
+            </div>
+          </div>
+        </div>
+
+        
+      </aside>
+    </main>
+
+    <footer>
+      Prototype (static) — replace simulated data with real sensor feed for full system demo.
+    </footer>
+  </div>
+
+<script>
+/* -----------------------------
+   Static dashboard logic (sim)
+   ----------------------------- */
+
+const MAX_HISTORY = 30;
+let running = true;
+let interval = 2000; // ms
+let hrThresh = Number(document.getElementById('inputHrThresh').value) || 100;
+let tempThresh = Number(document.getElementById('inputTempThresh').value) || 37.5;
+let batThresh = Number(document.getElementById('inputBatThresh').value) || 20;
+
+const state = {
+  history: [], // {t,hr,temp,bat}
+  battery: 100
+};
+
+// helpers
+function nowTS(){
+  const d = new Date();
+  return d.toLocaleTimeString();
+}
+function randNormal(mean, sd){
+  // simple normal approx via Box-Muller
+  let u=0,v=0;
+  while(u===0) u=Math.random();
+  while(v===0) v=Math.random();
+  return mean + sd * Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
+}
+
+/* Simulate readings */
+function simulateReading(){
+  // heart rate baseline 72 ± 8, occasional spikes
+  const hrNoise = randNormal(0,4);
+  let hrBase = 72 + hrNoise;
+  if(Math.random() < 0.05) hrBase += 30 * Math.random(); // rare spike
+  const hr = Math.round(Math.max(40, Math.min(180, hrBase)));
+
+  // temp baseline 36.6 ± 0.25, occasional fever
+  const tempNoise = randNormal(0,0.18);
+  let tempBase = 36.6 + tempNoise;
+  if(Math.random() < 0.04) tempBase += (0.8 + Math.random()*1.6); // fever event
+  const temp = Number(tempBase.toFixed(1));
+
+  // battery slowly drains
+  state.battery = Math.max(5, state.battery - (Math.random()*0.5));
+  const bat = Math.round(state.battery);
+
+  const rec = { t: nowTS(), hr, temp, bat };
+  state.history.push(rec);
+  if(state.history.length > MAX_HISTORY) state.history.shift();
+
+  return rec;
+}
+
+/* UI updates */
+const heartValEl = document.getElementById('heartVal');
+const tempValEl = document.getElementById('tempVal');
+const batValEl = document.getElementById('batVal');
+const historyTbody = document.querySelector('#historyTable tbody');
+const alertsBox = document.getElementById('alertsBox');
+const systemState = document.getElementById('systemState');
+const hrThreshEl = document.getElementById('hrThresh');
+const tempThreshEl = document.getElementById('tempThresh');
+const batThreshEl = document.getElementById('batThresh');
+
+function pushToHistoryRow(rec){
+  // create a new top row
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${rec.t}</td><td>${rec.hr}</td><td>${rec.temp.toFixed(1)}</td><td>${rec.bat}%</td>`;
+  historyTbody.insertBefore(tr, historyTbody.firstChild);
+  // limit rows visually to 20
+  while(historyTbody.children.length > 20) historyTbody.removeChild(historyTbody.lastChild);
+}
+
+/* Alerts */
+function checkAlerts(rec){
+  alertsBox.innerHTML = ''; // reset
+  const alerts = [];
+
+  if(rec.hr > hrThresh) alerts.push({ level:'crit', text: `High heart rate: ${rec.hr} bpm` });
+  else if(rec.hr > hrThresh - 10) alerts.push({ level:'warn', text: `Elevated heart rate: ${rec.hr} bpm` });
+
+  if(rec.temp > tempThresh) alerts.push({ level:'crit', text: `High temperature: ${rec.temp.toFixed(1)} °C` });
+  else if(rec.temp > tempThresh - 0.5) alerts.push({ level:'warn', text: `Slightly raised temp: ${rec.temp.toFixed(1)} °C` });
+
+  if(rec.bat <= batThresh) alerts.push({ level:'warn', text: `Low battery: ${rec.bat}%` });
+
+  if(alerts.length === 0){
+    const ok = document.createElement('div');
+    ok.className = 'alert ok';
+    ok.textContent = 'All vitals OK';
+    alertsBox.appendChild(ok);
+  } else {
+    alerts.forEach(a=>{
+      const d = document.createElement('div');
+      d.className = 'alert ' + (a.level === 'crit' ? 'crit' : 'warn');
+      d.textContent = a.text;
+      alertsBox.appendChild(d);
+    });
+  }
+}
+
+/* Charts setup */
+const hrCtx = document.getElementById('hrChart').getContext('2d');
+const tempCtx = document.getElementById('tempChart').getContext('2d');
+
+const hrChart = new Chart(hrCtx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      label: 'Heart Rate (bpm)',
+      data: [],
+      tension: 0.3,
+      pointRadius: 2,
+      borderWidth: 2,
+      borderColor: '#e44b4b',
+      backgroundColor: 'rgba(228,75,75,0.06)',
+    }]
+  },
+  options: {
+    animation:false,
+    responsive:true,
+    scales:{
+      y:{min:40,max:180},
+      x:{display:false}
+    },
+    plugins:{legend:{display:false}}
+  }
+});
+
+const tempChart = new Chart(tempCtx, {
+  type:'line',
+  data:{
+    labels:[],
+    datasets:[{
+      label:'Temperature (°C)',
+      data:[],
+      tension:0.3,
+      pointRadius:2,
+      borderWidth:2,
+      borderColor:'#ff914d',
+      backgroundColor:'rgba(255,145,77,0.06)'
+    }]
+  },
+  options:{
+    animation:false,
+    responsive:true,
+    scales:{
+      y:{min:35,max:40},
+      x:{display:false}
+    },
+    plugins:{legend:{display:false}}
+  }
+});
+
+/* Add reading to charts */
+function pushToCharts(rec){
+  hrChart.data.labels.push(rec.t);
+  hrChart.data.datasets[0].data.push(rec.hr);
+  tempChart.data.labels.push(rec.t);
+  tempChart.data.datasets[0].data.push(rec.temp);
+  if(hrChart.data.labels.length > MAX_HISTORY){
+    hrChart.data.labels.shift(); hrChart.data.datasets[0].data.shift();
+    tempChart.data.labels.shift(); tempChart.data.datasets[0].data.shift();
+  }
+  hrChart.update('none');
+  tempChart.update('none');
+}
+
+/* main loop */
+let loopTimer = null;
+function startLoop(){
+  if(loopTimer) clearInterval(loopTimer);
+  loopTimer = setInterval(()=>{
+    if(!running) return;
+    const rec = simulateReading();
+    // UI
+    heartValEl.textContent = rec.hr + ' bpm';
+    tempValEl.textContent = rec.temp.toFixed(1) + ' °C';
+    batValEl.textContent = rec.bat + ' %';
+    pushToHistoryRow(rec);
+    pushToCharts(rec);
+    checkAlerts(rec);
+    systemState.textContent = 'Connected';
+  }, interval);
+}
+startLoop();
+
+/* controls */
+document.getElementById('toggleBtn').addEventListener('click', function(){
+  running = !running;
+  this.textContent = running ? 'Pause' : 'Resume';
+  systemState.textContent = running ? 'Connected' : 'Paused';
+});
+document.getElementById('resetBtn').addEventListener('click', function(){
+  state.history = [];
+  state.battery = 100;
+  historyTbody.innerHTML = '';
+  hrChart.data.labels = []; hrChart.data.datasets[0].data = [];
+  tempChart.data.labels = []; tempChart.data.datasets[0].data = [];
+  hrChart.update(); tempChart.update();
+  alertsBox.innerHTML = '';
+});
+document.getElementById('simSpeed').addEventListener('change', function(){
+  interval = Number(this.value);
+  startLoop();
+});
+document.getElementById('applyThresh').addEventListener('click', function(){
+  hrThresh = Number(document.getElementById('inputHrThresh').value) || hrThresh;
+  tempThresh = Number(document.getElementById('inputTempThresh').value) || tempThresh;
+  batThresh = Number(document.getElementById('inputBatThresh').value) || batThresh;
+  hrThreshEl.textContent = hrThresh;
+  tempThreshEl.textContent = tempThresh;
+  batThreshEl.textContent = batThresh;
+});
+
+/* export CSV */
+document.getElementById('exportCsv').addEventListener('click', function(){
+  const rows = [['time','heart','temp','battery']].concat(state.history.map(r=>[r.t,r.hr,r.temp.toFixed(1),r.bat]));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'health_history.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+/* snapshot (canvas) - uses chart canvases & gathers a screenshot-like PNG */
+document.getElementById('snapshotBtn').addEventListener('click', async function(){
+  try{
+    // create a temporary canvas large enough
+    const cw = Math.max(hrChart.canvas.width, tempChart.canvas.width) + 20;
+    const ch = hrChart.canvas.height + tempChart.canvas.height + 80;
+    const tmp = document.createElement('canvas');
+    tmp.width = cw; tmp.height = ch;
+    const ctx = tmp.getContext('2d');
+    // paint background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,tmp.width,tmp.height);
+    // draw charts
+    ctx.drawImage(hrChart.canvas, 10, 10);
+    ctx.drawImage(tempChart.canvas, 10, 10 + hrChart.canvas.height + 20);
+    const url = tmp.toDataURL('image/png');
+    const a = document.createElement('a'); a.href = url; a.download = 'snapshot.png';
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){
+    alert('Snapshot failed: '+e.message);
+  }
+});
+
+/* demo critical alert */
+document.getElementById('demoAlert').addEventListener('click', function(){
+  const rec = { t: nowTS(), hr: hrThresh + 40, temp: tempThresh + 2.0, bat: 10 };
+  state.history.push(rec); if(state.history.length>MAX_HISTORY) state.history.shift();
+  pushToHistoryRow(rec); pushToCharts(rec); checkAlerts(rec);
+});
+
+/* small UI: trigger a demo reading on load so charts aren't empty */
+(function seed(){
+  for(let i=0;i<6;i++){
+    const r = simulateReading();
+    state.history.push(r);
+    pushToCharts(r);
+    pushToHistoryRow(r);
+  }
+})();
+
+</script>
+</body>
+</html>
